@@ -1,5 +1,5 @@
 import Cropper from 'cropperjs';
-import { FunctionComponent, createElement, ForwardedRef, forwardRef, Ref, useCallback, useEffect, useRef, useState } from 'react';
+import { createElement, ForwardedRef, forwardRef, FunctionComponent, Ref, useEffect, useRef } from 'react';
 
 type Options = Omit<Cropper.Options, 'ready' | 'zoom' | 'crop' | 'cropstart' | 'cropmove' | 'cropend' | 'data'>;
 
@@ -7,7 +7,7 @@ export interface Props<T extends keyof ComponentMap> extends Options {
   component?: T;
   ref?: Ref<ComponentMap[T]>;
 
-  enable?: boolean;
+  disabled?: boolean;
 
   scaleX?: number;
   scaleY?: number;
@@ -34,8 +34,6 @@ interface ComponentMap {
 
 const CropperComponent = forwardRef<ComponentMap[keyof ComponentMap], Props<keyof ComponentMap>>((props, outerRef) => {
   const ref = useForwardedRef<ComponentMap[keyof ComponentMap]>(outerRef);
-  const [cropper, setCropper] = useState<Cropper>();
-  const update = useCallback((cropper: Cropper) => configure(cropper, props), [props]);
   useEffect(() => {
     if (!ref.current) {
       return;
@@ -45,7 +43,7 @@ const CropperComponent = forwardRef<ComponentMap[keyof ComponentMap], Props<keyo
       data: props.data as Cropper.Data,
       ready(event) {
         const target = event.target as EventTarget & { cropper: Cropper };
-        update(target.cropper);
+        apply(target.cropper, props);
         props.onReady?.(event);
       },
       crop: props.onCrop,
@@ -55,17 +53,14 @@ const CropperComponent = forwardRef<ComponentMap[keyof ComponentMap], Props<keyo
       zoom: props.onZoom,
     });
     props.onInitialized(cropper);
-    setCropper(cropper);
     return () => {
       cropper.destroy();
     };
   }, [ref]);
-  useEffect(() => cropper && update(cropper), [cropper, props]);
   return createElement(props.component!, { ref });
 });
 
 CropperComponent.defaultProps = {
-  enable: true,
   component: 'canvas',
   dragMode: 'crop',
 };
@@ -85,15 +80,20 @@ function useForwardedRef<T>(forwardedRef: ForwardedRef<T>) {
   return ref;
 }
 
-function configure<T extends keyof ComponentMap>(cropper: Cropper, props: Props<T>) {
-  cropper[props.enable ? 'enable' : 'disable']();
-  props.aspectRatio && cropper.setAspectRatio(props.aspectRatio);
-  props.dragMode && cropper.setDragMode(props.dragMode);
-  props.data && cropper.setData(props.data);
-  props.cropBox && cropper.setCropBoxData(props.cropBox);
-  props.canvas && cropper.setCanvasData(props.canvas);
-  props.scaleX && cropper.scaleX(props.scaleX);
-  props.scaleY && cropper.scaleY(props.scaleY);
-  props.rotateTo && cropper.rotateTo(props.rotateTo);
-  props.zoomTo && props.zoomTo > 0 && cropper.zoomTo(props.zoomTo);
+function apply<T extends keyof ComponentMap>(cropper: Cropper, props: Props<T>) {
+  cropper[props.disabled ? 'disable' : 'enable']();
+  set('setAspectRatio', props.aspectRatio);
+  set('setDragMode', props.dragMode);
+  set('setCropBoxData', props.cropBox);
+  set('setCanvasData', props.canvas);
+  set('scaleX', props.scaleX);
+  set('scaleY', props.scaleY);
+  set('rotateTo', props.rotateTo);
+  set('zoomTo', props.zoomTo);
+  function set(name: keyof Cropper, value: unknown | undefined) {
+    if (value !== undefined || value !== null) {
+      // @ts-ignore
+      cropper[name](value);
+    }
+  }
 }
