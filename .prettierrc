@@ -1,0 +1,6 @@
+{
+  "quoteProps": "consistent",
+  "trailingComma": "all",
+  "printWidth": 160,
+  "singleQuote": true
+}
