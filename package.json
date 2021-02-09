@@ -1,6 +1,6 @@
 {
   "name": "@nice-labs/react-cropper",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "description": "Cropper as React Component",
   "repository": "https://github.com/NiceLabs/react-cropper",
   "license": "MIT",
