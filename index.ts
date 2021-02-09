@@ -84,6 +84,7 @@ function apply<T extends keyof ComponentMap>(cropper: Cropper, props: Props<T>) 
   cropper[props.disabled ? 'disable' : 'enable']();
   set('setAspectRatio', props.aspectRatio);
   set('setDragMode', props.dragMode);
+  set('setData', props.data);
   set('setCropBoxData', props.cropBox);
   set('setCanvasData', props.canvas);
   set('scaleX', props.scaleX);
